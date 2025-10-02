@@ -16,7 +16,7 @@ services:
   api:
     container_name: api
     build:
-      context: ./ToolKeeperAIBackend
+      context: ./back
       dockerfile: Dockerfile
     depends_on:
       - db
@@ -28,7 +28,7 @@ services:
   ml:
     container_name: ml
     build:
-      context: ./ToolKeeperAIML
+      context: ./ml
       dockerfile: Dockerfile
     ports:
       - "8000:8000"
@@ -36,7 +36,7 @@ services:
   front:
     container_name: front
     build:
-      context: ./ToolKeeperAIFrontend
+      context: ./front
       dockerfile: Dockerfile
     ports:
       - "80:80"
