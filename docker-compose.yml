@@ -1,0 +1,45 @@
+version: '3.9'
+services:
+  db:
+    image: postgres:16
+    container_name: my_postgres
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: tool_keeper_ai_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+  
+  api:
+    container_name: api
+    build:
+      context: ./ToolKeeperAIBackend
+      dockerfile: Dockerfile
+    depends_on:
+      - db
+    environment:
+      - ConnectionStrings__DefaultConnection=Host=db;Port=5432;Database=tool_keeper_ai_db;Username=postgres;Password=postgres
+    ports:
+      - "8001:8001"
+
+  ml:
+    container_name: ml
+    build:
+      context: ./ToolKeeperAIML
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+
+  front:
+    container_name: front
+    build:
+      context: ./ToolKeeperAIFrontend
+      dockerfile: Dockerfile
+    ports:
+      - "80:80"
+
+volumes:
+  pgdata:

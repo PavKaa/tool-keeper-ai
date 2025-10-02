@@ -1,0 +1,139 @@
+:root {
+  --color-bg: #2D1551;
+  --color-accent: #12D6A7;
+  --color-accent-text: #FC3777;
+  --color-main-text: #ffffff;
+}
+
+.container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  /* padding: 20px; */
+  font-family: "Montserrat", sans-serif;
+  /* background-color: var(--color-bg); */
+  color: var(--color-accent-text);
+}
+
+.container h4,
+h2 {
+  color: var(--color-main-text);
+}
+
+.centered {
+  text-align: center;
+  margin-top: 40px;
+}
+
+.inputField {
+  padding: 12px 16px;
+  font-size: 16px;
+  margin-bottom: 20px;
+  border: 2px solid var(--color-main-text);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--color-main-text);
+  outline: none;
+}
+
+.inputField::placeholder {
+  color: #aaa;
+}
+
+.frame {
+  border: 2px dashed var(--color-main-text);
+  margin: 20px auto;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  color: var(--color-main-text);
+}
+
+ul {
+  list-style: none;
+  padding-left: 0;
+}
+
+ul li::before {
+  content: "•";
+  color: var(--color-accent);
+  margin-right: 8px;
+}
+
+input[type="radio"] {
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--color-main-text);
+  border-radius: 50%;
+  margin-right: 6px;
+  position: relative;
+  cursor: pointer;
+}
+
+input[type="radio"]:checked::before {
+  content: "";
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  background: var(--color-accent);
+  border-radius: 50%;
+  top: 2px;
+  left: 2px;
+}
+
+input[type="file"] {
+  display: none;
+}
+
+.frame label {
+  padding: 10px 20px;
+  border: 2px solid var(--color-main-text);
+  border-radius: 8px;
+  cursor: pointer;
+  color: var(--color-main-text);
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.frame label:hover {
+  background-color: var(--color-accent);
+  color: #fff;
+  border-color: var(--color-accent);
+}
+
+.scrollBox {
+  max-height: 300px;
+  overflow-y: auto;
+  padding: 10px;
+  border: 1px solid #FC3777;
+  border-radius: 8px;
+}
+
+.scrollBox::-webkit-scrollbar {
+  width: 8px;
+}
+
+.scrollBox::-webkit-scrollbar-track {
+  background: #2D1551;
+  border-radius: 8px;
+}
+
+.scrollBox::-webkit-scrollbar-thumb {
+  background-color: #FC3777;
+  border-radius: 8px;
+  border: 2px solid #2D1551;
+}
+
+.scrollBox::-webkit-scrollbar-thumb:hover {
+  background-color: #CE0E2D;
+}
+
+.scrollBox {
+  scrollbar-width: thin;
+  scrollbar-color: #FC3777 #2D1551;
+}
