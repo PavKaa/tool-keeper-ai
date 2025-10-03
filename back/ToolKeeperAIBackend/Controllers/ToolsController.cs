@@ -16,7 +16,7 @@ namespace ToolKeeperAIBackend.Controllers
     {
         protected readonly IEmployeeService _employeeService;
         protected readonly IHttpClientFactory _httpClientFactory;
-        protected readonly ModelAPISettings _settings;
+        protected readonly AppSettings _settings;
 
         public ToolsController(IToolService toolService, IEmployeeService employeeService, 
                                IMapper mapper, IHttpClientFactory httpClientFactory, ILogger<ToolsController> logger,
@@ -25,7 +25,7 @@ namespace ToolKeeperAIBackend.Controllers
         {
             _employeeService = employeeService;
             _httpClientFactory = httpClientFactory;
-            _settings = options.Value.ModelAPISettings;
+            _settings = options.Value;
         }
 
         [HttpGet("GetByKitId/{kitId:long}")]
