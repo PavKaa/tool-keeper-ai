@@ -137,3 +137,17 @@ input[type="file"] {
   scrollbar-width: thin;
   scrollbar-color: #FC3777 #2D1551;
 }
+
+.ok::after {
+  content: "✔";
+  color: var(--color-accent);
+  font-weight: bold;
+  margin-left: 5px;
+}
+
+.fail::after {
+  content: "✘";
+  color: var(--color-accent-text);
+  font-weight: bold;
+  margin-left: 5px;
+}

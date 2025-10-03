@@ -218,7 +218,7 @@ export default function App() {
                 <ul>
                   {file.tools.map((t, tidx) => (
                     <li key={tidx}>
-                      {t.name} {t.confidence ? `(${t.confidence * 100}%)` : ""}
+                      {t.name} <span className={t.confidence === 1 ? styles.ok : styles.fail}></span>
                     </li>
                   ))}
                 </ul>
@@ -265,7 +265,7 @@ export default function App() {
                 <ul>
                   {file.tools.map((t, tidx) => (
                     <li key={tidx}>
-                      {t.name} {t.confidence ? `(${t.confidence * 100}%)` : ""}
+                      {t.name} <span className={t.confidence === 1 ? styles.ok : styles.fail}></span>
                     </li>
                   ))}
                 </ul>
