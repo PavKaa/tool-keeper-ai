@@ -1,4 +1,4 @@
-﻿using AutoMapper;
+using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using Service.Abstraction;
@@ -7,6 +7,7 @@ using Service.Dto.Patch;
 using Service.Model;
 using Service.Settings;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using ToolKeeperAIBackend.Extensions;
 
 namespace ToolKeeperAIBackend.Controllers
