@@ -202,7 +202,7 @@ namespace ToolKeeperAIBackend.Controllers
 
             using HttpClient httpClient = _httpClientFactory.CreateClient(nameof(HttpClient));
 
-            return await httpClient.PostAsync(_settings.PredictBatchImagesUrl, form);
+            return await httpClient.PostAsync(_settings.ModelAPISettings.PredictBatchImagesUrl, form);
         }
     }
 }
