@@ -83,14 +83,14 @@ namespace ToolKeeperAIBackend
                     Console.WriteLine(str);
 
                     response.EnsureSuccessStatusCode();
+
+                    var db = scope.ServiceProvider.GetRequiredService<ToolKeeperDbContext>();
+                    db.Database.Migrate();
                 }
                 catch (Exception ex)
                 {
                     Console.WriteLine(ex.Message);
                 }
-
-                var db = scope.ServiceProvider.GetRequiredService<ToolKeeperDbContext>();
-                db.Database.Migrate();
             }
 
             app.UseMiddleware<ErrorHandlingMiddleware>();
