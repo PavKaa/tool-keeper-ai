@@ -72,97 +72,123 @@ namespace ToolKeeperAIBackend.Controllers
             return this.FromResult(result);
         }
 
-        [DisableRequestSizeLimit]
-        [HttpPost("Test")]
-        public async Task<IActionResult> TestWorkability(IFormFile file)
-        {
-            if (file == null || file.Length == 0)
-                return BadRequest("There is not uploaded file");
-
-            if (file.FileName.EndsWith(".jpg", StringComparison.OrdinalIgnoreCase) ||
-                file.FileName.EndsWith(".png", StringComparison.OrdinalIgnoreCase))
-            {
-                using var ms = new MemoryStream();
-                using var fileStream = file.OpenReadStream();
-
-                await fileStream.CopyToAsync(ms);
-
-                using HttpClient httpClient = _httpClientFactory.CreateClient(nameof(HttpClient));
-
-                using var form = new MultipartFormDataContent();
-
-                form.Add(new ByteArrayContent(ms.ToArray()), $"file", file.FileName);
-
-                var response = await httpClient.PostAsync(_settings.PredictSingleImageUrl, form);
-
-                if (!response.IsSuccessStatusCode)
-                    return BadRequest(await response.Content.ReadAsStringAsync());
-
-                var prediction = await response.Content.ReadAsStringAsync();
-
-                var doc = JsonDocument.Parse(prediction);
-                var root = doc.RootElement;
-                var detections = root.EnumerateObject().First().Value;
-
-                return Ok(new Dictionary<string, object> { { file.FileName, detections } });
-            }
-            else
-            {
-                return BadRequest("File doesnt have png or jpg extension");
-            }
-        }
-
-        [HttpPost("TestZip")]
-        public async Task<IActionResult> TestZipWorkability(IFormFile file)
-        {
-            if (file == null || file.Length == 0)
-                return BadRequest("There is not uploaded archive file");
-
-            var photos = new List<byte[]>();
-            var photoNames = new List<string>();
-
-            using (var stream = file.OpenReadStream())
-            using (var archive = new System.IO.Compression.ZipArchive(stream, System.IO.Compression.ZipArchiveMode.Read))
-            {
-                foreach (var entry in archive.Entries)
-                {
-                    if (entry.FullName.EndsWith(".jpg", StringComparison.OrdinalIgnoreCase) ||
-                        entry.FullName.EndsWith(".png", StringComparison.OrdinalIgnoreCase))
-                    {
-                        using var entryStream = entry.Open();
-                        using var ms = new MemoryStream();
-
-                        await entryStream.CopyToAsync(ms);
-                        
-                        photos.Add(ms.ToArray());
-                        photoNames.Add(entry.FullName);
-                    }
-                }
-            }
-
-            var response = await SendPhotosToApi(photos, photoNames);
-
-            if (!response.IsSuccessStatusCode)
-                return BadRequest(await response.Content.ReadAsStringAsync());
-
-            var responseJson = await response.Content.ReadAsStringAsync();
-
-            var doc = JsonDocument.Parse(responseJson);
-            var root = doc.RootElement;
-            var batchDetections = root.EnumerateObject().First().Value;
-
-            var result = new Dictionary<string, object>();
-            int i = 0;
-
-            foreach (var detections in batchDetections.EnumerateObject())
-            {
-                result.Add(photoNames[i], detections.Value);
-
-                i++;
-            }
-
-            return Ok(result);
-        }
+        [RequestSizeLimit(16_777_216)]
+		[HttpPost("Test")]
+		public async Task<IActionResult> TestWorkability(IFormFile file)
+		{
+		    if (file == null || file.Length == 0)
+		        return BadRequest("There is not uploaded file");
+		
+		    if (file.FileName.EndsWith(".jpg", StringComparison.OrdinalIgnoreCase) ||
+		        file.FileName.EndsWith(".png", StringComparison.OrdinalIgnoreCase))
+		    {
+		        using var ms = new MemoryStream();
+		        using var fileStream = file.OpenReadStream();
+		
+		        await fileStream.CopyToAsync(ms);
+		
+		        using HttpClient httpClient = _httpClientFactory.CreateClient(nameof(HttpClient));
+		
+		        using var form = new MultipartFormDataContent();
+		
+		        form.Add(new ByteArrayContent(ms.ToArray()), $"file", file.FileName);
+		
+		        var response = await httpClient.PostAsync(_settings.ModelAPISettings.PredictSingleImageUrl, form);
+		
+		        if (!response.IsSuccessStatusCode)
+		            return BadRequest(await response.Content.ReadAsStringAsync());
+		
+		        var prediction = await response.Content.ReadAsStringAsync();
+		
+		        var doc = JsonDocument.Parse(prediction);
+		        var root = doc.RootElement;
+		        var detections = root.EnumerateObject().First().Value;
+		
+		        var treshold = _settings.ModelPrecisionSettings.ConfidenceTreshold;
+		
+				var jsonObject = new JsonObject();
+		
+				foreach (var detection in detections.EnumerateObject())
+				{
+					var score = detection.Value.GetDouble();
+		
+					int binaryScore = score >= treshold ? 1 : 0;
+		
+					jsonObject.Add(detection.Name, JsonValue.Create(binaryScore));
+				}
+		
+				return Ok(new Dictionary<string, object> { { file.FileName, jsonObject } });
+		    }
+		    else
+		    {
+		        return BadRequest("File doesnt have png or jpg extension");
+		    }
+		}
+		
+		[RequestSizeLimit(134_217_728)]
+		[HttpPost("TestZip")]
+		public async Task<IActionResult> TestZipWorkability(IFormFile file)
+		{
+		    if (file == null || file.Length == 0)
+		        return BadRequest("There is not uploaded archive file");
+		
+		    var photos = new List<byte[]>();
+		    var photoNames = new List<string>();
+		
+		    using (var stream = file.OpenReadStream())
+		    using (var archive = new System.IO.Compression.ZipArchive(stream, System.IO.Compression.ZipArchiveMode.Read))
+		    {
+		        foreach (var entry in archive.Entries)
+		        {
+		            if (entry.FullName.EndsWith(".jpg", StringComparison.OrdinalIgnoreCase) ||
+		                entry.FullName.EndsWith(".png", StringComparison.OrdinalIgnoreCase))
+		            {
+		                using var entryStream = entry.Open();
+		                using var ms = new MemoryStream();
+		
+		                await entryStream.CopyToAsync(ms);
+		                
+		                photos.Add(ms.ToArray());
+		                photoNames.Add(entry.FullName);
+		            }
+		        }
+		    }
+		
+		    var response = await SendPhotosToApi(photos, photoNames);
+		
+		    if (!response.IsSuccessStatusCode)
+		        return BadRequest(await response.Content.ReadAsStringAsync());
+		
+		    var responseJson = await response.Content.ReadAsStringAsync();
+		
+		    var doc = JsonDocument.Parse(responseJson);
+			var root = doc.RootElement;
+		
+			var result = new Dictionary<string, object>();
+			int i = 0;
+		
+			var treshold = _settings.ModelPrecisionSettings.ConfidenceTreshold;
+		
+			foreach (var detections in root.EnumerateObject())
+			{
+				var jsonObject = new JsonObject();
+		
+				foreach (var detection in detections.Value.EnumerateObject())
+				{
+					var score = detection.Value.GetDouble();
+		
+					int binaryScore = score >= treshold ? 1 : 0;
+		
+					jsonObject.Add(detection.Name, JsonValue.Create(binaryScore));
+				}
+		
+				result.Add(photoNames[i], jsonObject);
+		
+				i++;
+			}
+		
+			return Ok(result);
+		}
 
         private async Task<HttpResponseMessage> SendPhotosToApi(List<byte[]> photos, List<string> photoNames)
         {
