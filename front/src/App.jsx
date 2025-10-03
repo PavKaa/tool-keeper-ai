@@ -31,6 +31,7 @@ export default function App() {
   async function fetchTools() {
     try {
       if (!selectedFile) {
+        console.error("❌ Файл не выбран");
         alert("Выберите файл перед отправкой");
         return false; // 🚨 неуспех
       }
@@ -38,29 +39,56 @@ export default function App() {
       const formData = new FormData();
       formData.append("file", selectedFile);
 
-      let data;
-      if (fileType === "image") {
-        const response = await fetch("http://localhost:8001/api/v1/Tools/Test", {
-          method: "POST",
-          body: formData,
-        });
+      let url =
+        fileType === "image"
+          ? "http://localhost:8001/api/v1/Tools/Test"
+          : "http://localhost:8001/api/v1/Tools/TestZip";
 
-        const result = await response.json();
-        data = result;
-      } else {
-        const response = await fetch("http://localhost:8001/api/v1/Tools/TestZip", {
-          method: "POST",
-          body: formData,
-        });
+      console.log(`📡 Отправка запроса на: ${url}`, formData);
 
-        data = await response.json();
+      const response = await fetch(url, {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        console.error(
+          `❌ Сервер вернул ошибку: ${response.status} ${response.statusText}`
+        );
+        alert(`Ошибка: ${response.status} ${response.statusText}`);
+        return false;
       }
 
-      setTools(data);
-      return true; // ✅ успех
+      let data;
+      try {
+        data = await response.json();
+      } catch (jsonErr) {
+        console.error("❌ Ошибка парсинга JSON:", jsonErr);
+        alert("Ошибка обработки ответа сервера (невалидный JSON)");
+        return false;
+      }
+
+      let normalized = [];
+      for (const [filename, toolObj] of Object.entries(data)) {
+        let tools = Object.entries(toolObj).map(([name, confidence]) => ({
+          id: name,
+          name: name,
+          confidence: confidence,
+        }));
+        normalized.push({ filename, tools });
+      }
+
+      if (normalized.length === 0) {
+        console.warn("⚠️ Сервер вернул пустой результат", normalized);
+      } else {
+        console.log("✅ Полученные данные:", normalized);
+      }
+
+      setTools(normalized);
+      return true; // успех
     } catch (err) {
-      console.error("Ошибка загрузки инструментов", err);
-      alert("Ошибка загрузки инструментов");
+      console.error("💥 Ошибка загрузки инструментов:", err);
+      alert("Ошибка загрузки инструментов. Проверьте консоль для деталей.");
       return false;
     }
   }
@@ -262,6 +290,6 @@ export default function App() {
         )
       }
     </div >
-    
+
   );
 }
