@@ -20,6 +20,7 @@ services:
       dockerfile: Dockerfile
     depends_on:
       - db
+      - ml
     environment:
       - ConnectionStrings__DefaultConnection=Host=db;Port=5432;Database=tool_keeper_ai_db;Username=postgres;Password=postgres
       - ASPNETCORE_URLS=http://+:8001

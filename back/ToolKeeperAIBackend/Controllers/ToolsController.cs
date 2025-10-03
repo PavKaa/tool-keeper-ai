@@ -72,6 +72,7 @@ namespace ToolKeeperAIBackend.Controllers
             return this.FromResult(result);
         }
 
+        [DisableRequestSizeLimit]
         [HttpPost("Test")]
         public async Task<IActionResult> TestWorkability(IFormFile file)
         {
@@ -92,14 +93,18 @@ namespace ToolKeeperAIBackend.Controllers
 
                 form.Add(new ByteArrayContent(ms.ToArray()), $"file", file.FileName);
 
-                var response = await httpClient.PostAsync(_settings.PredictBatchImagesUrl, form);
+                var response = await httpClient.PostAsync(_settings.PredictSingleImageUrl, form);
 
                 if (!response.IsSuccessStatusCode)
                     return BadRequest(await response.Content.ReadAsStringAsync());
 
                 var prediction = await response.Content.ReadAsStringAsync();
 
-                return Ok(new Dictionary<string, string> { { file.FileName, prediction } });
+                var doc = JsonDocument.Parse(prediction);
+                var root = doc.RootElement;
+                var detections = root.EnumerateObject().First().Value;
+
+                return Ok(new Dictionary<string, object> { { file.FileName, detections } });
             }
             else
             {
@@ -142,11 +147,19 @@ namespace ToolKeeperAIBackend.Controllers
 
             var responseJson = await response.Content.ReadAsStringAsync();
 
-            List<string> predictions = JsonSerializer.Deserialize<List<string>>(responseJson)!;
+            var doc = JsonDocument.Parse(responseJson);
+            var root = doc.RootElement;
+            var batchDetections = root.EnumerateObject().First().Value;
 
-            var result = photoNames
-                .Select((name, i) => new { FileName = name, Result = predictions[i] })
-                .ToDictionary(x => x.FileName, x => x.Result);
+            var result = new Dictionary<string, object>();
+            int i = 0;
+
+            foreach (var detections in batchDetections.EnumerateObject())
+            {
+                result.Add(photoNames[i], detections.Value);
+
+                i++;
+            }
 
             return Ok(result);
         }
