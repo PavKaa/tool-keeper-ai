@@ -2,7 +2,6 @@ version: '3.9'
 services:
   db:
     image: postgres:16
-    container_name: my_postgres
     restart: always
     environment:
       POSTGRES_USER: postgres
@@ -14,7 +13,6 @@ services:
       - pgdata:/var/lib/postgresql/data
   
   api:
-    container_name: api
     build:
       context: ./back
       dockerfile: Dockerfile
@@ -28,7 +26,6 @@ services:
       - "8001:8001"
 
   ml:
-    container_name: ml
     build:
       context: ./ml
       dockerfile: Dockerfile
@@ -36,7 +33,6 @@ services:
       - "8000:8000"
 
   front:
-    container_name: front
     build:
       context: ./front
       dockerfile: Dockerfile

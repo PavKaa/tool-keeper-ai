@@ -40,7 +40,7 @@ export default function App() {
 
       let data;
       if (fileType === "image") {
-        const response = await fetch("http://127.0.0.1:8000/api/v1/Tools/Test", {
+        const response = await fetch("http://localhost:8001/api/v1/Tools/Test", {
           method: "POST",
           body: formData,
         });
@@ -48,7 +48,7 @@ export default function App() {
         const result = await response.json();
         data = result;
       } else {
-        const response = await fetch("http://127.0.0.1:8000/api/v1/Tools/TestZip", {
+        const response = await fetch("http://localhost:8001/api/v1/Tools/TestZip", {
           method: "POST",
           body: formData,
         });
@@ -84,8 +84,8 @@ export default function App() {
 
       const url =
         action === "take"
-          ? `http://127.0.0.1:8000/api/v1/Tools/TakeTools/${badge}`
-          : `http://127.0.0.1:8000/api/v1/Tools/ReturnTools/${badge}`;
+          ? `http://localhost:8001/api/v1/Tools/TakeTools/${badge}`
+          : `http://localhost:8001/api/v1/Tools/ReturnTools/${badge}`;
 
       await fetch(url, {
         method: "POST",
