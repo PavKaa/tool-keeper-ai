@@ -163,14 +163,14 @@ namespace ToolKeeperAIBackend.Controllers
 		    var responseJson = await response.Content.ReadAsStringAsync();
 		
 		    var doc = JsonDocument.Parse(responseJson);
-			var root = doc.RootElement;
+			var batchDetections = doc.RootElement.EnumerateObject().First().Value;
 		
 			var result = new Dictionary<string, object>();
 			int i = 0;
 		
 			var treshold = _settings.ModelPrecisionSettings.ConfidenceTreshold;
 		
-			foreach (var detections in root.EnumerateObject())
+			foreach (var detections in batchDetections.EnumerateObject())
 			{
 				var jsonObject = new JsonObject();
 		
