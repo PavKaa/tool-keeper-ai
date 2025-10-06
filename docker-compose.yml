@@ -22,6 +22,9 @@ services:
     environment:
       - ConnectionStrings__DefaultConnection=Host=db;Port=5432;Database=tool_keeper_ai_db;Username=postgres;Password=postgres
       - ASPNETCORE_URLS=http://+:8001
+      - AppSettings__ModelPrecisionSettings__ConfidenceTreshold=0.98
+      - AppSettings__ModelAPISettings__Host=http://ml_test
+      - AppSettings__ModelAPISettings__Port=8001
     ports:
       - "8001:8001"
 

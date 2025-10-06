@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Service.Abstraction;
@@ -13,7 +14,10 @@ namespace Service.Implementation
 {
 	public class ToolService : BaseService<Tool, ToolDto>, IToolService
 	{
-		protected readonly ModelPrecisionSettings _modelPrecisionSettings;
+		static protected string[] PERMITTED_IMAGE_EXTENSIONS = new[] { ".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp" };
+		static protected string[] PERMITTED_ARCHIVE_EXTENSIONS = new[] { ".zip" };
+
+        protected readonly ModelPrecisionSettings _modelPrecisionSettings;
 
 		public ToolService(IMapper mapper, ToolKeeperDbContext dbContext, IOptions<AppSettings> settings) : base(dbContext, mapper)
 		{
@@ -186,6 +190,23 @@ namespace Service.Implementation
 			checkReport.SuccessfulCheck = !(checkReport.Remarks.Count > 0);
 
 			return Result<CheckReport>.Success(checkReport);
+        }
+
+        public Task<Result<Dictionary<string, object>>> TestWorkabilityAsync(IFormFile file, string employeeUniqueNumber = "")
+        {
+            var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
+
+            if (!string.IsNullOrEmpty(ext))
+            {
+                if (PERMITTED_IMAGE_EXTENSIONS.Contains(ext))
+				{
+
+				}
+				else if (PERMITTED_ARCHIVE_EXTENSIONS.Contains(ext))
+				{
+
+				}
+            }
         }
 
         protected async Task<IEnumerable<Remark>> HandleUnpresentToolsAsync(List<long> unpresentTools, Dictionary<long, double> toolIdModelPredictionLink)
