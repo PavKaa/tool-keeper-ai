@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using Service.Dto.Create;
 using Service.Model;
 using Service.OperationResult;
@@ -15,5 +16,6 @@ namespace Service.Abstraction
 
 		Task<Result<CheckReport>> CheckToolsPresenceAsync(ToolCheckingDto[] toolCheckings, string toolKitSerialNumber);
 
+		Task<Result<Dictionary<string, object>>> TestWorkabilityAsync(IFormFile file, string employeeUniqueNumber);
     }
 }
