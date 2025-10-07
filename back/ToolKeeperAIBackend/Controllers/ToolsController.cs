@@ -102,24 +102,29 @@ namespace ToolKeeperAIBackend.Controllers
 		        var prediction = await response.Content.ReadAsStringAsync();
 		
 		        var doc = JsonDocument.Parse(prediction);
-		        var root = doc.RootElement;
-		        var detections = root.EnumerateObject().First().Value;
-		
-		        var treshold = _settings.ModelPrecisionSettings.ConfidenceTreshold;
-		
-				var jsonObject = new JsonObject();
-		
-				foreach (var detection in detections.EnumerateObject())
-				{
-					var score = detection.Value.GetDouble();
-		
-					int binaryScore = score >= treshold ? 1 : 0;
-		
-					jsonObject.Add(detection.Name, JsonValue.Create(binaryScore));
-				}
-		
-				return Ok(new Dictionary<string, object> { { file.FileName, jsonObject } });
-		    }
+				var root = doc.RootElement;
+				var detections = root.EnumerateObject().First().Value;
+
+				return Ok(new Dictionary<string, object> { { file.FileName, detections } });
+
+				//      var root = doc.RootElement;
+				//      var detections = root.EnumerateObject().First().Value;
+
+				//      var treshold = _settings.ModelPrecisionSettings.ConfidenceTreshold;
+
+				//var jsonObject = new JsonObject();
+
+				//foreach (var detection in detections.EnumerateObject())
+				//{
+				//	var score = detection.Value.GetDouble();
+
+				//	int binaryScore = score >= treshold ? 1 : 0;
+
+				//	jsonObject.Add(detection.Name, JsonValue.Create(binaryScore));
+				//}
+
+				//return Ok(new Dictionary<string, object> { { file.FileName, jsonObject } });
+			}
 		    else
 		    {
 		        return BadRequest("File doesnt have png or jpg extension");
@@ -163,31 +168,45 @@ namespace ToolKeeperAIBackend.Controllers
 		    var responseJson = await response.Content.ReadAsStringAsync();
 		
 		    var doc = JsonDocument.Parse(responseJson);
-			var batchDetections = doc.RootElement.EnumerateObject().First().Value;
-		
+
+			var root = doc.RootElement;
+			var batchDetections = root.EnumerateObject().First().Value;
+
 			var result = new Dictionary<string, object>();
 			int i = 0;
-		
-			var treshold = _settings.ModelPrecisionSettings.ConfidenceTreshold;
-		
+
 			foreach (var detections in batchDetections.EnumerateObject())
 			{
-				var jsonObject = new JsonObject();
-		
-				foreach (var detection in detections.Value.EnumerateObject())
-				{
-					var score = detection.Value.GetDouble();
-		
-					int binaryScore = score >= treshold ? 1 : 0;
-		
-					jsonObject.Add(detection.Name, JsonValue.Create(binaryScore));
-				}
-		
-				result.Add(photoNames[i], jsonObject);
-		
+				result.Add(photoNames[i], detections.Value);
+
 				i++;
 			}
-		
+
+			//var batchDetections = doc.RootElement.EnumerateObject().First().Value;
+
+			//var result = new Dictionary<string, object>();
+			//int i = 0;
+
+			//var treshold = _settings.ModelPrecisionSettings.ConfidenceTreshold;
+
+			//foreach (var detections in batchDetections.EnumerateObject())
+			//{
+			//	var jsonObject = new JsonObject();
+
+			//	foreach (var detection in detections.Value.EnumerateObject())
+			//	{
+			//		var score = detection.Value.GetDouble();
+
+			//		int binaryScore = score >= treshold ? 1 : 0;
+
+			//		jsonObject.Add(detection.Name, JsonValue.Create(binaryScore));
+			//	}
+
+			//	result.Add(photoNames[i], jsonObject);
+
+			//	i++;
+			//}
+
 			return Ok(result);
 		}
 
