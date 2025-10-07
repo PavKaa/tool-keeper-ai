@@ -7,9 +7,10 @@ export default function App() {
   const [badge, setBadge] = useState('');
   const [inputVal, setInputVal] = useState('');
   const [tools, setTools] = useState([]);
-  const [action, setAction] = useState(null); // "take" или "return"
-  const [fileType, setFileType] = useState('image'); // "image" или "zip"
+  const [action, setAction] = useState(null);
+  const [fileType, setFileType] = useState('image');
   const [selectedFile, setSelectedFile] = useState(null);
+  const [loading, setLoading] = useState(false); // 🔥 индикатор загрузки
 
   function reset() {
     setStep('enterId');
@@ -19,6 +20,7 @@ export default function App() {
     setAction(null);
     setFileType('image');
     setSelectedFile(null);
+    setLoading(false);
   }
 
   function goBack() {
@@ -31,10 +33,11 @@ export default function App() {
   async function fetchTools() {
     try {
       if (!selectedFile) {
-        console.error("❌ Файл не выбран");
         alert("Выберите файл перед отправкой");
-        return false; // 🚨 неуспех
+        return false;
       }
+
+      setLoading(true); // 🚀 показываем "Загрузка..."
 
       const formData = new FormData();
       formData.append("file", selectedFile);
@@ -44,54 +47,56 @@ export default function App() {
           ? "http://localhost:8001/api/v1/Tools/Test"
           : "http://localhost:8001/api/v1/Tools/TestZip";
 
-      console.log(`📡 Отправка запроса на: ${url}`, formData);
-
       const response = await fetch(url, {
         method: "POST",
         body: formData,
       });
 
       if (!response.ok) {
-        console.error(
-          `❌ Сервер вернул ошибку: ${response.status} ${response.statusText}`
-        );
         alert(`Ошибка: ${response.status} ${response.statusText}`);
         return false;
       }
 
-      let data;
-      try {
-        data = await response.json();
-      } catch (jsonErr) {
-        console.error("❌ Ошибка парсинга JSON:", jsonErr);
-        alert("Ошибка обработки ответа сервера (невалидный JSON)");
-        return false;
-      }
-
+      const data = await response.json();
       let normalized = [];
-      for (const [filename, toolObj] of Object.entries(data)) {
-        let tools = Object.entries(toolObj).map(([name, confidence]) => ({
-          id: name,
-          name: name,
-          confidence: confidence,
-        }));
-        normalized.push({ filename, tools });
-      }
 
-      if (normalized.length === 0) {
-        console.warn("⚠️ Сервер вернул пустой результат", normalized);
+      // 🔧 нормализуем под оба типа
+      if (Array.isArray(data)) {
+        normalized = data;
       } else {
-        console.log("✅ Полученные данные:", normalized);
+        for (const [filename, toolObj] of Object.entries(data)) {
+          let tools = Object.entries(toolObj).map(([name, confidence]) => ({
+            id: name,
+            name: name,
+            confidence: confidence,
+          }));
+          normalized.push({ filename, tools });
+        }
       }
 
       setTools(normalized);
-      return true; // успех
+      return true;
     } catch (err) {
-      console.error("💥 Ошибка загрузки инструментов:", err);
-      alert("Ошибка загрузки инструментов. Проверьте консоль для деталей.");
+      console.error("Ошибка загрузки:", err);
+      alert("Ошибка загрузки. Проверьте консоль.");
       return false;
+    } finally {
+      setLoading(false); // ✅ загрузка завершена
     }
   }
+
+  function downloadJSON() {
+    const blob = new Blob([JSON.stringify(tools, null, 2)], {
+      type: "application/json",
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "recognized_tools.json";
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
   async function confirmReport() {
     try {
       let payload = [];
@@ -126,7 +131,6 @@ export default function App() {
       console.error("Ошибка при подтверждении", err);
     }
   }
-
 
   return (
     <div className={styles.container}>
@@ -192,17 +196,18 @@ export default function App() {
           </div>
 
           <div style={{ marginTop: 20 }}>
-            <Button
-              onClick={async () => {
-                const ok = await fetchTools();
-                if (ok) {
-                  setStep('tools');
-                }
-              }}
-            >
-              Отправить на проверку
-            </Button>
-
+            {loading ? (
+              <Button disabled>Загрузка...</Button>
+            ) : (
+              <Button
+                onClick={async () => {
+                  const ok = await fetchTools();
+                  if (ok) setStep('tools');
+                }}
+              >
+                Отправить на проверку
+              </Button>
+            )}
           </div>
         </div>
       )}
@@ -218,34 +223,40 @@ export default function App() {
                 <ul>
                   {file.tools.map((t, tidx) => (
                     <li key={tidx}>
-                      {t.name} <span className={t.confidence === 1 ? styles.ok : styles.fail}></span>
+                      {t.name}{" "}
+                      <span
+                        className={t.confidence > 0 ? styles.ok : styles.fail}
+                      ></span>
                     </li>
                   ))}
                 </ul>
               </div>
             ))}
           </div>
+
+          {/* 💾 Кнопка скачать JSON — только для ZIP */}
+          {fileType === "zip" && (
+            <div style={{ marginTop: 10 }}>
+              <Button onClick={downloadJSON}>Скачать JSON</Button>
+            </div>
+          )}
+
           <div style={{ textAlign: 'right', marginTop: 20 }}>
             <Button onClick={() => setStep('action')}>Подтвердить список</Button>
           </div>
         </div>
       )}
 
-
-
-
       {/* Шаг 4: Выбор действия */}
       {step === 'action' && (
         <div className={styles.centered}>
           <h2>Выберите действие</h2>
-          <Button onClick={() => {
-            setAction('take');
-            setStep('report');
-          }}>Получить инструменты</Button>
-          <Button onClick={() => {
-            setAction('return');
-            setStep('report');
-          }}>Сдать инструменты</Button>
+          <Button onClick={() => { setAction('take'); setStep('report'); }}>
+            Получить инструменты
+          </Button>
+          <Button onClick={() => { setAction('return'); setStep('report'); }}>
+            Сдать инструменты
+          </Button>
         </div>
       )}
 
@@ -254,8 +265,8 @@ export default function App() {
         <div>
           <h2>Отчёт</h2>
           <p>
-            Сотрудник с табельным номером <b>{badge}</b>
-            {action === 'take' ? ' получил' : ' сдал'} набор инструментов:
+            Сотрудник с табельным номером <b>{badge}</b>{" "}
+            {action === 'take' ? 'получил' : 'сдал'} набор инструментов:
           </p>
 
           <div className={styles.scrollBox}>
@@ -265,7 +276,10 @@ export default function App() {
                 <ul>
                   {file.tools.map((t, tidx) => (
                     <li key={tidx}>
-                      {t.name} <span className={t.confidence === 1 ? styles.ok : styles.fail}></span>
+                      {t.name}{" "}
+                      <span
+                        className={t.confidence > 0 ? styles.ok : styles.fail}
+                      ></span>
                     </li>
                   ))}
                 </ul>
@@ -279,17 +293,12 @@ export default function App() {
         </div>
       )}
 
-
-
       {/* Кнопка Назад */}
-      {
-        step !== 'enterId' && (
-          <div style={{ position: 'fixed', bottom: 20, left: 20 }}>
-            <Button onClick={goBack}>Назад</Button>
-          </div>
-        )
-      }
-    </div >
-
+      {step !== 'enterId' && (
+        <div style={{ position: 'fixed', bottom: 20, left: 20 }}>
+          <Button onClick={goBack}>Назад</Button>
+        </div>
+      )}
+    </div>
   );
 }
