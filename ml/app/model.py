@@ -186,16 +186,12 @@ class DetectionModel:
                 outputs = self.model(batch)  # FasterRCNN принимает list of tensors
             for output in outputs:
                 detection = self._postrocess(output)
-                detections.append(cross_class_nms(detection))
-            # print(detections)
-            for detection in detections:
-                draw_detections(images[i], detection, output_path=f"output_{i}.jpg")
-                result = {str(item['label']): float(item['score']) for item in detection}
-                print(result)
+                detections = cross_class_nms(detection)
+                # draw_detections(images[i], detection, output_path=f"output_{i}.jpg")
+                result = {str(item['label']): float(item['score']) for item in detections}
                 result = id2partname(result)
-                print(result)
-
                 results[len(results)] = result
+        print(results)
         return results
 
             
