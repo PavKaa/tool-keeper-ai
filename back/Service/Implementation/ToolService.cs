@@ -195,16 +195,16 @@ namespace Service.Implementation
         public Task<Result<Dictionary<string, object>>> TestWorkabilityAsync(IFormFile file, string employeeUniqueNumber = "")
         {
             var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
-
-            if (!string.IsNullOrEmpty(ext))
+			return default;
+			if (!string.IsNullOrEmpty(ext))
             {
                 if (PERMITTED_IMAGE_EXTENSIONS.Contains(ext))
 				{
-
+					
 				}
 				else if (PERMITTED_ARCHIVE_EXTENSIONS.Contains(ext))
 				{
-
+					
 				}
             }
         }
